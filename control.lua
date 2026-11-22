@@ -1,3 +1,4 @@
+
 require("objects.storage")
 require("objects.balancer")
 require("objects.part")
@@ -38,7 +39,6 @@ script.on_configuration_changed(
         end
     end
 )
-
 
 -- Custom command to print out some statistics
 commands.add_command("belt-balancer-statistics", "", function(e)
@@ -99,16 +99,16 @@ function built_entity(e)
     elseif e.created_entity then
         entity = e.created_entity
     else
-        entity = e.destination -- this is the name of the entity from on_entity_cloned
+        entity = e.destination
     end
 
     if not entity or not entity.valid then
         return
     end
 
-    if not string.find(entity.name, "balancer") 
-        and not string.find(entity.type, "belt") 
-        and entity.type ~= "splitter" 
+    if not string.find(entity.name, "balancer")
+        and not string.find(entity.type, "belt")
+        and entity.type ~= "splitter"
         and not string.find(entity.name, ".*mdrn%-loader") then
         return
     end
@@ -134,7 +134,7 @@ script.on_event(
         defines.events.on_space_platform_built_entity,
         defines.events.script_raised_revive,
         defines.events.on_post_entity_died,
-        defines.events.on_entity_cloned -- fix compatability with region cloner
+        defines.events.on_entity_cloned
     },
     built_entity
 )
@@ -149,9 +149,13 @@ function remove_entity(e)
         entity = e.created_entity
     end
 
-    if not string.find(entity.name, "balancer") 
-        and not string.find(entity.type, "belt") 
-        and entity.type ~= "splitter" 
+    if not entity or not entity.valid then
+        return
+    end
+
+    if not string.find(entity.name, "balancer")
+        and not string.find(entity.type, "belt")
+        and entity.type ~= "splitter"
         and not string.find(entity.name, ".*mdrn%-loader") then
         return
     end
@@ -179,35 +183,46 @@ script.on_event(
     remove_entity
 )
 
-script.on_event({ defines.events.on_player_rotated_entity },
+-- Handle player rotation
+script.on_event(
+    {defines.events.on_player_rotated_entity},
     function(e)
-        if e.entity.type == "transport-belt" then
-            belt_functions.remove_belt(e.entity, e.previous_direction)
-            belt_functions.built_belt(e.entity)
+        local entity = e.entity
+
+        if not entity or not entity.valid then
+            return
         end
 
-        if string.find(e.entity.name, ".*mdrn%-loader") then
-            belt_functions.remove_belt(e.entity, e.previous_direction)
-            belt_functions.built_belt(e.entity)
+        if entity.type == "transport-belt" then
+            belt_functions.remove_belt(entity, e.previous_direction)
+            belt_functions.built_belt(entity)
         end
 
-        if e.entity.type == "underground-belt" then
-            belt_functions.remove_belt(e.entity, e.previous_direction)
-            belt_functions.built_belt(e.entity)
+        if string.find(entity.name, ".*mdrn%-loader") then
+            belt_functions.remove_belt(entity, e.previous_direction)
+            belt_functions.built_belt(entity)
+        end
 
-            -- Neighbour is only the other end
-            local neighbour = e.entity.neighbours
+        if entity.type == "underground-belt" then
+            belt_functions.remove_belt(entity, e.previous_direction)
+            belt_functions.built_belt(entity)
+
+            -- Get the other end of the underground belt (Factorio 2.1)
+            local neighbour = entity.underground_belt_neighbour
+
             if neighbour and neighbour.valid then
-                -- make neighbour also have previous_direction
-                local previous_direction = (neighbour.direction + 4) % 8
+                -- Calculate the opposite direction (Factorio 2.1 uses 16 directions)
+                local previous_direction = (neighbour.direction + 8) % 16
+
+                -- Update the other end of the underground belt
                 belt_functions.remove_belt(neighbour, previous_direction)
                 belt_functions.built_belt(neighbour)
             end
         end
 
-        if e.entity.type == "splitter" then
-            belt_functions.remove_splitter(e.entity, e.previous_direction)
-            belt_functions.built_splitter(e.entity)
+        if entity.type == "splitter" then
+            belt_functions.remove_splitter(entity, e.previous_direction)
+            belt_functions.built_splitter(entity)
         end
     end
 )
@@ -220,13 +235,26 @@ script.on_event(defines.events.on_tick, function()
     if belt and belt.entity.valid and belt.direction ~= belt.entity.direction then
         -- remove belt and readd it
         if belt.type == "splitter" then
-            belt_functions.remove_splitter(belt.entity, belt.direction, unit_number, belt.entity.surface, belt.position)
+            belt_functions.remove_splitter(
+                belt.entity,
+                belt.direction,
+                unit_number,
+                belt.entity.surface,
+                belt.position
+            )
             belt_functions.built_splitter(belt.entity)
         else
-            belt_functions.remove_belt(belt.entity, belt.direction, unit_number, belt.entity.surface, belt.position)
+            belt_functions.remove_belt(
+                belt.entity,
+                belt.direction,
+                unit_number,
+                belt.entity.surface,
+                belt.position
+            )
             belt_functions.built_belt(belt.entity)
         end
     end
 
     storage.next_belt_check, _ = next(storage.belts, unit_number)
 end)
+

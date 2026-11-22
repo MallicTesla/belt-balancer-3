@@ -1,10 +1,20 @@
-Version: 3.0.1
+---------------------------------------------------------------------------------------------------
+Version: 1.0.2
+Date: 23.10.2026
+  Correcciones:
+    - Actualizado 2.1
+    - Adaptada la detección del extremo conectado de las cintas subterráneas para Factorio 2.1 mediante underground_belt_neighbour.
+    - Corregido el cálculo de dirección opuesta para el nuevo sistema de 16 direcciones.
+    - Añadidas comprobaciones de validez de entidades en los eventos de construcción, eliminación y rotación.
+    - Conservada la actualización de conexiones y registros internos del balanceador al rotar cintas subterráneas.
+---------------------------------------------------------------------------------------------------
+Version: 1.0.1
 Date: 18.11.2025
   Changes:
     - 'durability' bug discovered thanks to cartwer.
     - Fixed thanks to Maximagor.
 
-Version: 3.0.0
+Version: 1.0.0
 Date: 01.11.2025
   Changes:
     - Fixing bugs by version 2
